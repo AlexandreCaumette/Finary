@@ -1,0 +1,7 @@
+requests
+polars
+streamlit
+json
+typing
+datetime
+altair
