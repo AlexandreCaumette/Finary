@@ -31,7 +31,7 @@ def income_source_form(parent: DeltaGenerator):
                  label='Augmentation moyenne annuelle (en %)',
                  key='input_average_annual_increase')
         
-    def add_income_source():
+    def patch_income_source():
         source = {
             'Catégorie': cube.read_state('income_source_type_selection'),
             'Label': cube.read_state('input_income_source_label'),
@@ -41,16 +41,21 @@ def income_source_form(parent: DeltaGenerator):
             'Augmentation moyenne annuelle': cube.read_state('input_average_annual_increase')
         }
         
-        cube.add_source(type='income', source=source)
+        cube.patch_source(type='income', source=source)
         
         parent.success("La nouvelle source de revenu a bien été ajoutée !", icon="💸")
         
     columns = parent.columns([1, 1, 7])
         
-    columns[0].button(label='Ajouter la source',
-            help="Permet de créer et d'ajouter une source de revenu à l'étude",
-            icon=':material/add:',
-            on_click=add_income_source)
+    if cube.read_state('index_income_source_selected') is not None:
+        columns[0].button(label='Modifier la source',
+                icon=':material/edit:',
+                on_click=patch_income_source)
+    else:
+        columns[0].button(label='Ajouter la source',
+                help="Permet de créer et d'ajouter une source de revenu à l'étude",
+                icon=':material/add:',
+                on_click=patch_income_source)
     
     def delete_income_source():
         cube.delete_income_source()

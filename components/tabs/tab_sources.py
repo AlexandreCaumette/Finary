@@ -1,6 +1,8 @@
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
 
+import json
+
 from data.cube import Cube
 import data.constants as cst
 
@@ -97,13 +99,14 @@ def config_section(parent: DeltaGenerator):
     parent.divider()
     
     def save_sources():
-        cube.save_sources()
         parent.success('Vos sources de patrimoine ont bien été enregistrées !', icon='🍾')
-
-    parent.button(label='Enregistrer ses sources',
-            help="Permet d'enregistrer dans un fichier .json les sources configurées et de les retrouver la prochaine fois.",
-            icon=':material/save:',
-            on_click=save_sources)
+        
+    parent.download_button(label='Enregistrer mes sources',
+                           data=json.dumps(cube.read_state('sources')),
+                           file_name='finary_sources.json',
+                           on_click=save_sources,
+                            help="Permet d'enregistrer dans un fichier .json les sources configurées et de les retrouver la prochaine fois.",
+                           icon=':material/save:')
 
 def render_tab_sources(tab: DeltaGenerator):
     tab.header('Configuration de vos sources de patrimoine et de revenus')

@@ -33,7 +33,7 @@ def estate_source_form(parent: DeltaGenerator):
                  label="Le rendement annuel de cette source (en pourcentage)",
                  key="input_estate_source_return")
         
-    def add_patrimoine_source():
+    def patch_estate_source():
         source = {
             'Catégorie': cube.read_state('input_estate_source_type'),
             'Label': cube.read_state('input_estate_source_label'),
@@ -43,16 +43,21 @@ def estate_source_form(parent: DeltaGenerator):
             'Rendement': cube.read_state('input_estate_source_return')
         }
         
-        cube.add_source(type='estate', source=source)
+        cube.patch_source(type='estate', source=source)
         
         parent.success("La nouvelle source de patrimoine a bien été ajoutée !", icon="💸")
         
     columns = parent.columns([1, 1, 7])
-        
-    columns[0].button(label='Ajouter la source',
-            help="Permet de créer et d'ajouter une source de patrimoine à l'étude",
-            icon=':material/add:',
-            on_click=add_patrimoine_source)
+    
+    if cube.read_state('index_estate_source_selected') is not None:
+        columns[0].button(label='Modifier la source',
+                icon=':material/edit:',
+                on_click=patch_estate_source)
+    else:
+        columns[0].button(label='Ajouter la source',
+                help="Permet de créer et d'ajouter une source de patrimoine à l'étude",
+                icon=':material/add:',
+                on_click=patch_estate_source)
     
     def delete_estate_source():
         cube.delete_estate_source()

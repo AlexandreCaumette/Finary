@@ -49,7 +49,7 @@ class Cube:
         self.write_state(key='df_income_sources',
                          value=pl.from_records(self.read_state('sources')['income']))
     
-    def add_source(self, type: Literal['estate', 'income'], source: dict):
+    def patch_source(self, type: Literal['estate', 'income'], source: dict):
         """Ajoute une source de revenu ou de patrimoine au cube de données.
 
         Args:
@@ -57,7 +57,11 @@ class Cube:
             source (dict): La source avec toutes ses propriétés.
         """
         value = self.read_state('sources')
-        value[type].append(source)
+        
+        if self.read_state(f'index_{type}_source_selected') is None:
+            value[type].append(source)
+        else:
+            value[type][self.read_state(f'index_{type}_source_selected')] = source        
         
         self.write_state(key='sources',
                          value=value)
@@ -189,7 +193,7 @@ class Cube:
         
     def delete_income_source(self):
         self.delete_source(type='income')
-        
+            
     ###   Getters pour lire des données du cube   ###
     
     def get_bitcoin_price(self):
