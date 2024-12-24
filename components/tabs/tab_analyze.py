@@ -1,5 +1,7 @@
 from streamlit.delta_generator import DeltaGenerator
 from data.cube import Cube
+import data.constants as cst
+
 import altair as alt
 from components.metrics import render_metric_estate, render_metric_income
 
@@ -20,9 +22,9 @@ def render_tab_analyze(tab: DeltaGenerator):
     
     metric_columns[2].metric(label="Taux d'épargne actuel",
                value=f"{cube.compute_saving_rate():.2%}",
-               help="Une explication détaillée du taux d'épargne est disponible plus bas sur cette page.")
+               help=f"Une explication détaillée du taux d'épargne est disponible dans l'onglet **{cst.TAB_ANALYSE}**.")
     
-    chart_columns = tab.columns([1, 2, 1], border=True)
+    chart_columns = tab.columns([2, 3, 2], border=True)
     
     chart_current_estate = (
         alt.Chart(cube.get_df_estate_sources())
@@ -97,9 +99,9 @@ def render_tab_analyze(tab: DeltaGenerator):
     
     tab.divider()
     
-    tab.subheader('WORK IN PROGRESS')
+    expander = tab.expander('WORK IN PROGRESS')
     
-    deposit_columns = tab.columns([1, 1], border=True)
+    deposit_columns = expander.columns([1, 1], border=True)
     
     deposit_columns[0].area_chart(data=cube.compute_left_income(years),
                    x='date',

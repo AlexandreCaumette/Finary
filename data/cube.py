@@ -24,6 +24,9 @@ class Cube:
             
         if 'index_income_source_selected' not in st.session_state:
             self.write_state(key='index_income_source_selected', value=None)
+            
+        if 'income_source_social_toggle' not in st.session_state:
+            self.write_state(key='income_source_social_toggle', value=False)
     
     ###   Setters pour écrire des données sur le cube   ###
     
@@ -69,7 +72,10 @@ class Cube:
         self.update_df_sources()
 
     def save_sources(self):
-        with open('./data/personal_sources.json', 'w') as file:
+        timestamp = datetime.strftime(datetime.now(), "%Y-%m-%d %H-%M-%s")
+        file_path = f'./data/personal_sources_{timestamp}.json'
+
+        with open(file_path, 'w') as file:
             json.dump(self.read_state('sources'), file)
         
     def read_state(self, key: str = None):
@@ -134,6 +140,11 @@ class Cube:
         
             self.write_state(key='input_estate_source_return',
                             value=estate_source_row['Rendement'])
+         
+    def is_income_source_selected(self) -> bool:
+        selected_rows_index = self.read_state('income_sources_dataframe')['selection']['rows']
+        
+        return len(selected_rows_index) > 0
             
     def on_select_income_source(self):
         selected_rows_index = self.read_state('income_sources_dataframe')['selection']['rows']
@@ -165,7 +176,7 @@ class Cube:
             self.write_state(key='income_source_type_selection',
                             value=income_source_row['Catégorie'])
             
-            self.write_state(key='income_source_row',
+            self.write_state(key='input_income_source_label',
                             value=income_source_row['Label'])
                         
             self.write_state(key='input_annual_gross_salary',
@@ -348,19 +359,38 @@ class Cube:
             
         return pl.DataFrame(results)
     
-    def compute_net_income(self, gross_salary: float):
-        # Liste des contributions sociales
-        social_contributions = [
+    def get_social_contributions_df(self) -> pl.DataFrame:
+        return pl.DataFrame(data=[
             # ('Nom de la contribution', taux salarial)
-            ('complementaire_sante', 0.0122),
-            ("securite_sociale_plafonnee", 0.069),
-            ("securite_sociale_deplafonnee", 0.004),
-            ("complementaire_tu1", 0.04364),
-            ("apec", 0.00024),
-            ("csg_crds", 0.029),
-            ("csg", 0.068)
-        ]
-        
+            ('complementaire_sante', 1.22),
+            ("securite_sociale_plafonnee", 6.90),
+            ("securite_sociale_deplafonnee", 0.4),
+            ("complementaire_tu1", 4.364),
+            ("apec", 0.024),
+            ("csg_crds", 2.9),
+            ("csg", 6.8)
+        ],
+                     schema={'Cotisations sociales': pl.String, 'Taux': pl.Float32},
+                     orient='row')
+    
+    def is_column_in_df(self, df: pl.DataFrame, column: str) -> bool:
+        try:
+            df.get_column(name=column)
+            return True
+        except pl.exceptions.ColumnNotFoundError:
+            return False
+        except Exception as err:
+            raise err
+    
+    def compute_net_income(self, gross_salary: float):
+        if self.is_column_in_df(df=self.get_df_income_sources(), column='Cotisations sociales'):
+            # Liste des contributions sociales
+            social_contributions = self.get_df_income_sources().select('Cotisations sociales').to_dicts()['Cotisations sociales']
+            social_contributions = [(c[0]['Cotisations sociales'], c[1]['Taux'] / 100) for c in social_contributions]
+        else:
+            social_contributions = self.get_social_contributions_df().to_dicts()
+            social_contributions = [(c['Cotisations sociales'], c['Taux'] / 100) for c in social_contributions]
+            
         # Autres éléments de paie
         other_salary_elements = [
             ('indemnite_teletravail', 20),

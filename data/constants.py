@@ -10,3 +10,7 @@ INCOME_SOURCES_LIST = [
     "Cadeau",
     'Aides'
 ]
+
+TAB_SOURCE = '📝 Mes données'
+TAB_PILOTAGE = '📊 Mon tableau de pilotage'
+TAB_ANALYSE = '👨🏻‍🏫 Analyse de ma situation'

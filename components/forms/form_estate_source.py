@@ -3,7 +3,7 @@ from streamlit.delta_generator import DeltaGenerator
 from data.cube import Cube
 import data.constants as cst
 
-from components.forms.form_inputs import number_input
+from components.forms.form_inputs import number_input, patch_button
 
 cube = Cube() 
 
@@ -47,17 +47,9 @@ def estate_source_form(parent: DeltaGenerator):
         
         parent.success("La nouvelle source de patrimoine a bien été ajoutée !", icon="💸")
         
-    columns = parent.columns([1, 1, 7])
+    columns = parent.columns([1, 1, 5])
     
-    if cube.read_state('index_estate_source_selected') is not None:
-        columns[0].button(label='Modifier la source',
-                icon=':material/edit:',
-                on_click=patch_estate_source)
-    else:
-        columns[0].button(label='Ajouter la source',
-                help="Permet de créer et d'ajouter une source de patrimoine à l'étude",
-                icon=':material/add:',
-                on_click=patch_estate_source)
+    patch_button(parent=columns[0], on_click=patch_estate_source, key='index_estate_source_selected')
     
     def delete_estate_source():
         cube.delete_estate_source()
