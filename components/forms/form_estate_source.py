@@ -1,6 +1,7 @@
 from streamlit.delta_generator import DeltaGenerator
 
 from data.cube import Cube
+import data.module_state_management as state
 import data.constants as cst
 
 from components.forms.form_inputs import number_input, patch_button
@@ -35,12 +36,12 @@ def estate_source_form(parent: DeltaGenerator):
         
     def patch_estate_source():
         source = {
-            'Catégorie': cube.read_state('input_estate_source_type'),
-            'Label': cube.read_state('input_estate_source_label'),
-            'Montant à date': cube.read_state('input_estate_source_amount'),
-            'Apport annuel': cube.read_state('input_estate_source_deposit'),
-            'Plafond': cube.read_state('input_estate_source_limit'),
-            'Rendement': cube.read_state('input_estate_source_return')
+            'Catégorie': state.read_state('input_estate_source_type'),
+            'Label': state.read_state('input_estate_source_label'),
+            'Montant à date': state.read_state('input_estate_source_amount'),
+            'Apport annuel': state.read_state('input_estate_source_deposit'),
+            'Plafond': state.read_state('input_estate_source_limit'),
+            'Rendement': state.read_state('input_estate_source_return')
         }
         
         cube.patch_source(type='estate', source=source)
@@ -55,7 +56,7 @@ def estate_source_form(parent: DeltaGenerator):
         cube.delete_estate_source()
         parent.success("La source de patrimoine a bien été supprimée")
     
-    if cube.read_state('index_estate_source_selected') is not None:
+    if state.read_state('index_estate_source_selected') is not None:
         columns[1].button(label='Supprimer la source',
                 help="Retire cette source de la liste des sources de patrimoine",
                 icon=':material/clear:',

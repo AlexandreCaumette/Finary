@@ -1,5 +1,6 @@
 from streamlit.delta_generator import DeltaGenerator
 from data.cube import Cube
+import data.module_state_management as state
 
 cube = Cube()
 
@@ -13,7 +14,7 @@ def number_input(parent: DeltaGenerator, label: str, key: str, value: float = 0.
                         help=help)
     
 def patch_button(parent: DeltaGenerator, on_click, key: str):
-    if cube.read_state(key) is not None:
+    if state.read_state(key) is not None:
         parent.button(label='Modifier la source',
                 icon=':material/edit:',
                 key=f'{key}_add_button',

@@ -5,6 +5,7 @@ import polars as pl
 import json
 
 from data.cube import Cube
+import data.module_state_management as state
 import data.constants as cst
 
 from components.forms.form_estate_source import estate_source_form
@@ -109,7 +110,7 @@ def config_section(parent: DeltaGenerator):
                       help=f"Un fichier `personal_sources_<...>.json` téléchargé depuis {cst.APP_NAME}")
         
     columns[1].download_button(label='Télécharger ses sources',
-                           data=json.dumps(cube.read_state('sources')),
+                           data=json.dumps(state.read_state('sources')),
                            file_name='finary_sources.json',
                            on_click=save_sources,
                             help="Permet d'enregistrer dans un fichier `personal_sources_<...>.json` les sources configurées et de les retrouver la prochaine fois.",

@@ -2,6 +2,7 @@ import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
 
 from data.cube import Cube
+import data.module_state_management as state
 import data.constants as cst
 
 from components.forms.form_inputs import number_input, patch_button
@@ -9,8 +10,8 @@ from components.forms.form_inputs import number_input, patch_button
 cube = Cube()
 
 def reset_toggle():
-    if cube.read_state('income_source_type_selection') != 'Salaire':
-        cube.write_state('income_source_social_toggle', False)
+    if state.read_state('income_source_type_selection') != 'Salaire':
+        state.write_state('income_source_social_toggle', False)
 
 def income_source_form(parent: DeltaGenerator):    
     parent.selectbox(label='Sélectionner un type de source de revenu',
@@ -22,7 +23,7 @@ def income_source_form(parent: DeltaGenerator):
     toggle = parent.toggle(label="Je connais mes taux de cotisation sociale",
                     key='income_source_social_toggle',
                   value=False,
-                  disabled=cube.read_state('income_source_type_selection') != 'Salaire')
+                  disabled=state.read_state('income_source_type_selection') != 'Salaire')
     
     columns = parent.columns([1, 1] if toggle else [1], border=toggle)
     
@@ -44,7 +45,7 @@ def income_source_form(parent: DeltaGenerator):
                  label='Augmentation moyenne annuelle (en %)',
                  key='input_average_annual_increase')
     
-    if cube.read_state('income_source_social_toggle'):
+    if state.read_state('income_source_social_toggle'):
         columns[1].text("La liste des contributions sociales mentionnées sur votre fichie de paie.")
         
         df_input_social_contributions = columns[1].data_editor(data=cube.get_social_contributions_df(),
@@ -62,15 +63,15 @@ def income_source_form(parent: DeltaGenerator):
     
     def patch_income_source():
         source = {
-            'Catégorie': cube.read_state('income_source_type_selection'),
-            'Label': cube.read_state('input_income_source_label'),
-            'Montant annuel brut': cube.read_state('input_annual_gross_salary'),
-            'Montant annuel net': cube.read_state('input_annual_net_salary'),
-            'Montant annuel net après impôt': cube.read_state('input_annual_net_salary_after_tax'),
-            'Augmentation moyenne annuelle': cube.read_state('input_average_annual_increase')
+            'Catégorie': state.read_state('income_source_type_selection'),
+            'Label': state.read_state('input_income_source_label'),
+            'Montant annuel brut': state.read_state('input_annual_gross_salary'),
+            'Montant annuel net': state.read_state('input_annual_net_salary'),
+            'Montant annuel net après impôt': state.read_state('input_annual_net_salary_after_tax'),
+            'Augmentation moyenne annuelle': state.read_state('input_average_annual_increase')
         }
         
-        if cube.read_state('income_source_social_toggle'):
+        if state.read_state('income_source_social_toggle'):
             print(df_input_social_contributions)
             source['Cotisations sociales'] = df_input_social_contributions.to_dicts()
         
@@ -86,7 +87,7 @@ def income_source_form(parent: DeltaGenerator):
         cube.delete_income_source()
         parent.success("La source de revenu a bien été supprimée")
     
-    if cube.read_state('index_income_source_selected') is not None:
+    if state.read_state('index_income_source_selected') is not None:
         columns[1].button(label='Supprimer la source',
                 help="Retire cette source de la liste des sources de revenu",
                 icon=':material/clear:',

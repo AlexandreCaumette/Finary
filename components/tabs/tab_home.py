@@ -2,7 +2,7 @@ from streamlit.delta_generator import DeltaGenerator
 import data.constants as cst
 
 def render_tab_home(tab: DeltaGenerator):
-    tab.header('Bienvenu sur votre application de gestion de patrimoine !')
+    tab.header('Bienvenue sur votre application de gestion de patrimoine !')
     
     tab.subheader("Qu'est-ce que c'est ?")
     
