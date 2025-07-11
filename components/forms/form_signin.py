@@ -4,9 +4,9 @@ from supabase import AuthApiError
 
 
 def signin():
-    conn = st.connection("supabase", type=SupabaseConnection)
-
     try:
+        conn = st.connection("supabase", type=SupabaseConnection)
+
         response = conn.auth.sign_in_with_password(
             {
                 "email": st.session_state["input_signin_email"],

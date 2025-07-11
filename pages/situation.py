@@ -23,7 +23,7 @@ def estate_section():
 
     response = (
         conn.table("PATRIMOINE")
-        .select("*")
+        .select("id_patrimoine", "type, label, amount, deposit, limit, return")
         .eq("id_user", st.session_state["user_data"].id)
         .execute()
     )
@@ -32,26 +32,53 @@ def estate_section():
 
     column_form, column_dataframe = st.columns([1, 2])
 
-    with column_form:
-        estate_source_form()
-
     with column_dataframe:
         if dataframe.height > 0:
-            st.dataframe(
+            selection = st.dataframe(
                 data=dataframe,
                 key="estate_sources_dataframe",
                 width=900,
+                on_select="rerun",
                 selection_mode="single-row",
-                on_select=cube.on_select_estate_source,
                 column_config={
-                    "Montant à date": st.column_config.NumberColumn(format="%.2f €"),
-                    "Apport annuel": st.column_config.NumberColumn(format="%.2f €"),
-                    "Plafond": st.column_config.NumberColumn(format="%.2f €"),
-                    "Rendement": st.column_config.NumberColumn(format="%.2f %%"),
+                    "id_patrimoine": None,
+                    "amount": st.column_config.NumberColumn(format="%.2f €"),
+                    "deposit": st.column_config.NumberColumn(format="%.2f €"),
+                    "limit": st.column_config.NumberColumn(format="%.2f €"),
+                    "return": st.column_config.NumberColumn(format="%.2f %%"),
                 },
             )
+
+            if len(selection["selection"]["rows"]) > 0:
+                st.session_state["situation_configuration_mode"] = "edit"
+
+                row_index = selection["selection"]["rows"][0]
+                row = dataframe.row(index=row_index, named=True)
+
+                st.session_state["input_estate_source_type"] = row["type"]
+                st.session_state["input_estate_source_label"] = row["label"]
+                st.session_state["input_estate_source_amount"] = row["amount"]
+                st.session_state["input_estate_source_deposit"] = row["deposit"]
+                st.session_state["input_estate_source_limit"] = row["limit"]
+                st.session_state["input_estate_source_return"] = row["return"]
+                st.session_state["selected_estate_source_id"] = row["id_patrimoine"]
+
+            else:
+                st.session_state["situation_configuration_mode"] = "add"
+
+                st.session_state["input_estate_source_type"] = None
+                st.session_state["input_estate_source_label"] = None
+                st.session_state["input_estate_source_amount"] = 0.0
+                st.session_state["input_estate_source_deposit"] = 0.0
+                st.session_state["input_estate_source_limit"] = None
+                st.session_state["input_estate_source_return"] = 0.0
+                st.session_state["selected_estate_source_id"] = None
+
         else:
             st.text("Vous pouvez ajouter une première source de patrimoine")
+
+    with column_form:
+        estate_source_form()
 
 
 def income_section():

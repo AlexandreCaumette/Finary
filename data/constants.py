@@ -2,14 +2,12 @@ APP_NAME = "**:orange[Finary] 🪙**"
 
 PAGES_CONFIG = [
     {
-        "file": "page_home.py",
         "label": "1. Accueil",
         "name": "home",
         "icon": "🏠",
         "disabled": False,
     },
     {
-        "file": "page_situation.py",
         "label": "2. Ma situation",
         "name": "situation",
         "icon": "📝",
@@ -19,7 +17,6 @@ PAGES_CONFIG = [
         """,
     },
     {
-        "file": "page_summary.py",
         "label": "3. Mon tableau de pilotage",
         "name": "summary",
         "icon": "📊",
@@ -30,7 +27,6 @@ PAGES_CONFIG = [
         """,
     },
     {
-        "file": "page_analysis.py",
         "label": "4. Analyse de ma situation",
         "name": "analysis",
         "icon": "👨🏻‍🏫",
