@@ -4,9 +4,9 @@ from supabase import AuthApiError
 
 
 def signin():
-    conn = st.connection("supabase", type=SupabaseConnection)
-
     try:
+        conn = st.connection("supabase", type=SupabaseConnection)
+
         response = conn.auth.sign_in_with_password(
             {
                 "email": st.session_state["input_signin_email"],
@@ -14,10 +14,8 @@ def signin():
             }
         )
 
-        print(f"{response=}")
-
         st.session_state["is_user_logged"] = True
-        st.session_state["user_data"] = response.data[0]
+        st.session_state["user_data"] = response.user
         st.success(body="Vous êtes connecté à votre compte Finary.")
 
     except AuthApiError as error:

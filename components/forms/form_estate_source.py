@@ -1,5 +1,6 @@
 import streamlit as st
 from st_supabase_connection import SupabaseConnection
+from postgrest import APIError
 import polars as pl
 
 import data.constants as cst
@@ -8,83 +9,78 @@ from components.forms.form_inputs import number_input
 
 
 def insert_patrimoine():
-    conn = st.connection("supabase", type=SupabaseConnection)
+    try:
+        payload = {
+            "type": st.session_state["input_estate_source_type"],
+            "label": st.session_state["input_estate_source_label"],
+            "amount": st.session_state["input_estate_source_amount"],
+            "deposit": st.session_state["input_estate_source_deposit"],
+            "limit": st.session_state["input_estate_source_limit"],
+            "return": st.session_state["input_estate_source_return"],
+            "id_user": st.session_state["user_data"].id,
+        }
 
-    response = (
-        conn.table("PATRIMOINE")
-        .insert(
-            {
-                "type": st.session_state("input_estate_source_type"),
-                "label": st.session_state("input_estate_source_label"),
-                "amount": st.session_state("input_estate_source_amount"),
-                "deposit": st.session_state("input_estate_source_deposit"),
-                "limit": st.session_state("input_estate_source_limit"),
-                "return": st.session_state("input_estate_source_return"),
-                "user_id": st.session_state["user_data"]["id"],
-            }
-        )
-        .execute()
-    )
+        conn = st.connection("supabase", type=SupabaseConnection)
 
-    if len(response.data) == 0:
-        st.error("La source n'a pas pu être ajoutée.")
+        (conn.table("PATRIMOINE").insert(json=payload, default_to_null=False).execute())
 
-    else:
         st.success("La nouvelle source a été ajoutée avec succès", icon="💸")
-        st.session_state["patrimoine_dataframe"] = pl.concat(
-            st.session_state["patrimoine_dataframe"], pl.from_records(response.data)
+
+    except APIError as error:
+        st.error(
+            body=f"{error.code} : {error.message} - {error.details} - {error.hint}"
         )
 
 
 def update_patrimoine():
-    conn = st.connection("supabase", type=SupabaseConnection)
+    try:
+        payload = {
+            "type": st.session_state["input_estate_source_type"],
+            "label": st.session_state["input_estate_source_label"],
+            "amount": st.session_state["input_estate_source_amount"],
+            "deposit": st.session_state["input_estate_source_deposit"],
+            "limit": st.session_state["input_estate_source_limit"],
+            "return": st.session_state["input_estate_source_return"],
+            "id_user": st.session_state["user_data"].id,
+            "id_patrimoine": st.session_state["selected_estate_source_id"],
+        }
 
-    response = (
-        conn.table("PATRIMOINE")
-        .update(
-            {
-                "type": st.session_state["input_estate_source_type"],
-                "label": st.session_state["input_estate_source_label"],
-                "amount": st.session_state["input_estate_source_amount"],
-                "deposit": st.session_state["input_estate_source_deposit"],
-                "limit": st.session_state["input_estate_source_limit"],
-                "return": st.session_state["input_estate_source_return"],
-            }
+        conn = st.connection("supabase", type=SupabaseConnection)
+
+        (
+            conn.table("PATRIMOINE")
+            .update(json=payload)
+            .eq("id_patrimoine", st.session_state["selected_estate_source_id"])
+            .execute()
         )
-        .eq("id_patrimoine", st.session_state["select_estate_source_id"])
-        .execute()
-    )
 
-    if len(response.data) == 0:
-        st.error("La source n'a pas pu être modifiée.")
-
-    else:
         st.success("La source a été modifiée avec succès", icon="💸")
-        st.session_state["patrimoine_dataframe"] = st.session_state[
-            "patrimoine_dataframe"
-        ].update(pl.from_records(response.data), on="id_patrimoine")
         st.session_state["situation_configuration_mode"] = "add"
+
+    except APIError as error:
+        st.error(
+            body=f"{error.code} : {error.message} - {error.details} - {error.hint}"
+        )
 
 
 def delete_patrimoine():
-    conn = st.connection("supabase", type=SupabaseConnection)
+    try:
+        conn = st.connection("supabase", type=SupabaseConnection)
 
-    response = (
-        conn.table("PATRIMOINE")
-        .delete()
-        .eq("id_patrimoine", st.session_state["select_estate_source_id"])
-        .execute()
-    )
+        (
+            conn.table("PATRIMOINE")
+            .delete()
+            .eq("id_patrimoine", st.session_state["select_estate_source_id"])
+            .execute()
+        )
 
-    if len(response.data) == 0:
-        st.error("La source n'a pas pu être supprimée.")
-
-    else:
         st.success("La source a été supprimée avec succès", icon="💸")
-        st.session_state["patrimoine_dataframe"] = st.session_state[
-            "patrimoine_dataframe"
-        ].filter(pl.col("id_patrimoine") == response.data[0]["id_patrimoine"])
         st.session_state["situation_configuration_mode"] = "add"
+
+    except APIError as error:
+        st.error(
+            body=f"{error.code} : {error.message} - {error.details} - {error.hint}"
+        )
 
 
 def estate_source_form():
@@ -108,6 +104,7 @@ def estate_source_form():
             "Label",
             key="input_estate_source_label",
             placeholder="PEA, SCPI, Bitcoin, ...",
+            value=None,
         )
 
         number_input(

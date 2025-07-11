@@ -85,64 +85,6 @@ class Cube:
     def is_dataframe_initialized(self):
         return self.get_df_estate_sources().shape[0] > 0
 
-    def on_select_estate_source(self):
-        selected_rows_index = state.read_state("estate_sources_dataframe")["selection"][
-            "rows"
-        ]
-
-        if len(selected_rows_index) == 0:
-            state.write_state(key="situation_configuration_mode", value="add")
-
-            state.write_state(key="index_estate_source_selected", value=None)
-
-            state.write_state(key="input_estate_source_type", value=None)
-
-            state.write_state(key="input_estate_source_label", value=None)
-
-            state.write_state(key="input_estate_source_amount", value=0.0)
-
-            state.write_state(key="input_estate_source_deposit", value=0.0)
-
-            state.write_state(key="input_estate_source_limit", value=None)
-
-            state.write_state(key="input_estate_source_return", value=0.0)
-        else:
-            state.write_state(key="situation_configuration_mode", value="edit")
-
-            index_source = selected_rows_index[0]
-
-            state.write_state(key="index_estate_source_selected", value=index_source)
-
-            estate_source_row = self.get_df_estate_sources().row(
-                index=index_source, named=True
-            )
-
-            state.write_state(
-                key="input_estate_source_type", value=estate_source_row["Catégorie"]
-            )
-
-            state.write_state(
-                key="input_estate_source_label", value=estate_source_row["Label"]
-            )
-
-            state.write_state(
-                key="input_estate_source_amount",
-                value=estate_source_row["Montant à date"],
-            )
-
-            state.write_state(
-                key="input_estate_source_deposit",
-                value=estate_source_row["Apport annuel"],
-            )
-
-            state.write_state(
-                key="input_estate_source_limit", value=estate_source_row["Plafond"]
-            )
-
-            state.write_state(
-                key="input_estate_source_return", value=estate_source_row["Rendement"]
-            )
-
     def is_income_source_selected(self) -> bool:
         selected_rows_index = state.read_state("income_sources_dataframe")["selection"][
             "rows"
