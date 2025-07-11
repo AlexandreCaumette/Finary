@@ -4,12 +4,11 @@
 
 
 import streamlit as st
-
+from st_supabase_connection import SupabaseConnection
 from data.cube import Cube
 import data.constants as cst
 
 from components.pages.page_home import page_home
-from components.pages.page_situation import page_situation
 from components.pages.page_404 import page_404
 
 cube = Cube()
@@ -61,15 +60,31 @@ with st.container():
 
     elif st.session_state["active_container"] == "situation":
         if st.session_state["is_user_logged"]:
-            page_situation()
+            st.switch_page("pages/situation.py")
         else:
+            conn = st.connection("supabase", type=SupabaseConnection)
+
+            session = conn.auth.get_session()
+
+            if session is not None:
+                st.info("Une session a été récupérée...")
+
+                user = conn.auth.get_user(jwt=session.access_token)
+
+                if user is not None:
+                    st.info("Un utilisateur a été récupéré...")
+
+                    st.session_state["is_user_logged"] = True
+                    st.session_state["user_data"] = user
+                    st.switch_page("pages/situation.py")
+
             st.switch_page("pages/loggin.py")
 
     elif st.session_state["active_container"] == "summary":
-        page_situation()
+        pass
 
     elif st.session_state["active_container"] == "analysis":
-        page_situation()
+        pass
 
     else:
         page_404()

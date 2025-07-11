@@ -1,5 +1,6 @@
 import streamlit as st
 from st_supabase_connection import SupabaseConnection
+from postgrest import APIError
 import polars as pl
 
 import data.constants as cst
@@ -8,31 +9,34 @@ from components.forms.form_inputs import number_input
 
 
 def insert_patrimoine():
-    conn = st.connection("supabase", type=SupabaseConnection)
+    try:
+        payload = {
+            "type": st.session_state["input_estate_source_type"],
+            "label": st.session_state["input_estate_source_label"],
+            "amount": st.session_state["input_estate_source_amount"],
+            "deposit": st.session_state["input_estate_source_deposit"],
+            "limit": st.session_state["input_estate_source_limit"],
+            "return": st.session_state["input_estate_source_return"],
+            "id_user": st.session_state["user_data"].id,
+        }
 
-    response = (
-        conn.table("PATRIMOINE")
-        .insert(
-            {
-                "type": st.session_state("input_estate_source_type"),
-                "label": st.session_state("input_estate_source_label"),
-                "amount": st.session_state("input_estate_source_amount"),
-                "deposit": st.session_state("input_estate_source_deposit"),
-                "limit": st.session_state("input_estate_source_limit"),
-                "return": st.session_state("input_estate_source_return"),
-                "user_id": st.session_state["user_data"]["id"],
-            }
-        )
-        .execute()
-    )
+        print(f"{payload=}")
 
-    if len(response.data) == 0:
-        st.error("La source n'a pas pu être ajoutée.")
+        conn = st.connection("supabase", type=SupabaseConnection)
 
-    else:
-        st.success("La nouvelle source a été ajoutée avec succès", icon="💸")
-        st.session_state["patrimoine_dataframe"] = pl.concat(
-            st.session_state["patrimoine_dataframe"], pl.from_records(response.data)
+        response = conn.table("PATRIMOINE").insert(json=payload).execute()
+
+        if len(response.data) == 0:
+            st.error("La source n'a pas pu être ajoutée.")
+
+        else:
+            st.success("La nouvelle source a été ajoutée avec succès", icon="💸")
+            st.session_state["patrimoine_dataframe"] = pl.concat(
+                st.session_state["patrimoine_dataframe"], pl.from_records(response.data)
+            )
+    except APIError as error:
+        st.error(
+            body=f"{error.code} : {error.message} - {error.details} - {error.hint}"
         )
 
 

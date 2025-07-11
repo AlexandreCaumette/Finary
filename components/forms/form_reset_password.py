@@ -1,6 +1,6 @@
 import streamlit as st
 from st_supabase_connection import SupabaseConnection
-from supabase import AuthApiError, AuthSessionMissingError
+from supabase import AuthApiError, AuthSessionMissingError, AuthWeakPasswordError
 from streamlit_url_fragment import get_fragment
 
 
@@ -14,23 +14,27 @@ def reset_password(query_params: dict):
         )
         return
 
+    if len(st.session_state["input_signup_confirmation_reset_password"]) <= 6:
+        st.warning("Le mot de passe doit faire au minimum 7 caractères !")
+        return
+
     conn = st.connection("supabase", type=SupabaseConnection)
 
     try:
-        access_token = query_params["access_token"]
+        print(f"{query_params}")
 
-        print(f"{access_token=}")
+        conn.auth.set_session(
+            access_token=query_params["access_token"],
+            refresh_token=query_params["refresh_token"],
+        )
 
-        conn.auth.exchange_code_for_session({"auth_code": access_token})
-
-        response = conn.auth.update_user(
-            access_token,
+        response_update = conn.auth.update_user(
             {
                 "password": st.session_state["input_reset_password"],
             },
         )
 
-        print(f"{response=}")
+        print(f"{response_update=}")
 
         st.session_state["is_user_logged"] = False
         st.success(body="Votre mot de passe a bien été réinitialisé.")
@@ -42,11 +46,15 @@ def reset_password(query_params: dict):
     except AuthSessionMissingError as error:
         st.error(body=f"{error.name} : {error.code} - {error.message}")
 
+    except AuthWeakPasswordError as error:
+        st.error(body=f"{error.name} : {error.code} - {error.message}")
+
 
 def reset_password_form():
     fragments_string = get_fragment()
 
     if fragments_string is None:
+        st.warning("Le token n'a pas encore été récupéré depuis l'URL...")
         st.stop()
 
     fragments = fragments_string[1:].split("&")
