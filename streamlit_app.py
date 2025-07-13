@@ -55,7 +55,6 @@ with st.sidebar:
         )
 
         if login_button:
-            print(os.path.exists("pages/login.py"))
             st.switch_page(page=r"pages/login.py")
 
 current_page = st.navigation(pages=pages, position="hidden")

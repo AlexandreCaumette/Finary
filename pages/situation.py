@@ -53,6 +53,7 @@ with tab_estate:
         )
 
     dataframe = pl.from_records(response_patrimoine.data)
+    st.session_state["df_patrimoine"] = dataframe
 
     column_form, column_dataframe = st.columns([1, 2])
 
@@ -85,6 +86,7 @@ with tab_income:
         )
 
     dataframe = pl.from_records(response_revenu.data)
+    st.session_state["df_revenu"] = dataframe
 
     column_form, column_dataframe = st.columns([1, 2])
 
