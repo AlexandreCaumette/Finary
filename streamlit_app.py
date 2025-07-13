@@ -5,10 +5,8 @@
 
 import streamlit as st
 from st_supabase_connection import SupabaseConnection
-from data.cube import Cube
 import data.constants as cst
-
-cube = Cube()
+import os
 
 
 ####################################
@@ -23,7 +21,46 @@ if "is_user_logged" not in st.session_state:
 
 st.title("Application de gestion de patrimoine")
 
-columns = st.columns(spec=len(cst.PAGES_CONFIG))
+pages = [
+    st.Page(
+        page=f"pages/{page_config['name']}.py",
+    )
+    for page_config in cst.PAGES_CONFIG
+]
+
+with st.sidebar:
+    for page_config in cst.PAGES_CONFIG:
+        if page_config["visible"]:
+            st.page_link(
+                page=f"pages/{page_config['name']}.py",
+                label=page_config.get("label", None),
+                icon=page_config["icon"],
+                help=page_config.get("help", None),
+                disabled=page_config["name"] != "home"
+                and not st.session_state["is_user_logged"],
+            )
+
+    st.divider()
+
+    if st.session_state["is_user_logged"]:
+        st.button(
+            label="Me déconnecter",
+            icon=":material/logout:",
+        )
+
+    else:
+        login_button = st.button(
+            label="Me connecter",
+            icon=":material/login:",
+        )
+
+        if login_button:
+            print(os.path.exists("pages/login.py"))
+            st.switch_page(page=r"pages/login.py")
+
+current_page = st.navigation(pages=pages, position="hidden")
+
+current_page.run()
 
 
 def select_page(name: str):
@@ -56,19 +93,3 @@ def select_page(name: str):
                 st.session_state["is_user_logged"] = True
                 st.session_state["user_data"] = user
                 st.switch_page(f"pages/{name}.py")
-
-
-for index_col, page_config in enumerate(cst.PAGES_CONFIG):
-    with columns[index_col]:
-        st.button(
-            label=page_config["label"],
-            icon=page_config["icon"],
-            disabled=page_config["disabled"],
-            help=page_config.get("help", None),
-            use_container_width=True,
-            type="primary"
-            if page_config["name"] == st.session_state["active_container"]
-            else "secondary",
-            on_click=select_page,
-            kwargs={"name": page_config["name"]},
-        )

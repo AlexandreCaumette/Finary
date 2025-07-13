@@ -5,12 +5,11 @@ import data.module_state_management as state
 cube = Cube()
 
 
-def number_input(label: str, key: str, value: float = 0.0, help: str = None):
+def number_input(label: str, key: str, help: str = None):
     st.number_input(
         label=label,
         key=key,
         min_value=0.0,
-        value=value,
         format="%.2f",
         step=500.0,
         help=help,
