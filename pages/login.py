@@ -8,7 +8,7 @@ if "is_user_logged" not in st.session_state:
     st.session_state["is_user_logged"] = False
 
 if st.session_state["is_user_logged"]:
-    st.switch_page("pages/situation.py")
+    st.switch_page("pages/home.py")
 
 st.header("Authentification à votre compte")
 

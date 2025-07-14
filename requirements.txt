@@ -1,6 +1,6 @@
 requests
 polars
 streamlit
-altair
+altair==5.5.0
 supabase
 st-supabase-connection==2.1.0

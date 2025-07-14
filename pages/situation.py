@@ -2,118 +2,19 @@ import streamlit as st
 from st_supabase_connection import SupabaseConnection
 import polars as pl
 
-from data.cube import Cube
 import data.constants as cst
 
-from components.forms.form_estate_source import estate_source_form
-from components.forms.form_income_source import income_source_form
-
-cube = Cube()
-
-
-def estate_section():
-    st.subheader("Mes sources de patrimoine et d'investissement")
-
-    st.markdown(f"""
-    Le visuel ci-dessous est un tableau récapitulatif de toutes les sources de patrimoine créées grâce au formulaire plus bas.
-    Le tableau est ainsi vide lors de la première utilisation de {cst.APP_NAME}, et se met à jour automatiquement à chaque soumission du formulaire.                
-    """)
-
-    conn = st.connection("supabase", type=SupabaseConnection)
-
-    response = (
-        conn.table("PATRIMOINE")
-        .select("id_patrimoine", "type, label, amount, deposit, limit, return")
-        .eq("id_user", st.session_state["user_data"].id)
-        .execute()
-    )
-
-    dataframe = pl.from_records(response.data)
-
-    column_form, column_dataframe = st.columns([1, 2])
-
-    with column_dataframe:
-        if dataframe.height > 0:
-            selection = st.dataframe(
-                data=dataframe,
-                key="estate_sources_dataframe",
-                width=900,
-                on_select="rerun",
-                selection_mode="single-row",
-                column_config={
-                    "id_patrimoine": None,
-                    "amount": st.column_config.NumberColumn(format="%.2f €"),
-                    "deposit": st.column_config.NumberColumn(format="%.2f €"),
-                    "limit": st.column_config.NumberColumn(format="%.2f €"),
-                    "return": st.column_config.NumberColumn(format="%.2f %%"),
-                },
-            )
-
-            if len(selection["selection"]["rows"]) > 0:
-                st.session_state["situation_configuration_mode"] = "edit"
-
-                row_index = selection["selection"]["rows"][0]
-                row = dataframe.row(index=row_index, named=True)
-
-                st.session_state["input_estate_source_type"] = row["type"]
-                st.session_state["input_estate_source_label"] = row["label"]
-                st.session_state["input_estate_source_amount"] = row["amount"]
-                st.session_state["input_estate_source_deposit"] = row["deposit"]
-                st.session_state["input_estate_source_limit"] = row["limit"]
-                st.session_state["input_estate_source_return"] = row["return"]
-                st.session_state["selected_estate_source_id"] = row["id_patrimoine"]
-
-            else:
-                st.session_state["situation_configuration_mode"] = "add"
-
-                st.session_state["input_estate_source_type"] = None
-                st.session_state["input_estate_source_label"] = None
-                st.session_state["input_estate_source_amount"] = 0.0
-                st.session_state["input_estate_source_deposit"] = 0.0
-                st.session_state["input_estate_source_limit"] = None
-                st.session_state["input_estate_source_return"] = 0.0
-                st.session_state["selected_estate_source_id"] = None
-
-        else:
-            st.text("Vous pouvez ajouter une première source de patrimoine")
-
-    with column_form:
-        estate_source_form()
+from components.forms.form_patrimoine import render_form_patrimoine
+from components.forms.form_revenu import render_form_revenu
+from components.dataframes.dataframe_patrimoine import render_dataframe_patrimoine
+from components.dataframes.dataframe_revenu import render_dataframe_revenu
 
 
-def income_section():
-    st.subheader("Mes sources de revenus")
+if not st.session_state["is_user_logged"]:
+    st.warning("Aucun utilisateur n'a été trouvé, veuillez vous connecter.")
+    st.switch_page("pages/login.py")
 
-    st.markdown(f"""
-    Le visuel ci-dessous est un tableau récapitulatif de toutes les sources de revenu créées grâce au formulaire plus bas.
-    Le tableau est ainsi vide lors de la première utilisation de {cst.APP_NAME}, et se met à jour automatiquement à chaque soumission du formulaire.                
-    """)
-
-    st.dataframe(
-        data=cube.get_df_income_sources(),
-        key="income_sources_dataframe",
-        width=1000,
-        selection_mode="single-row",
-        on_select=cube.on_select_income_source,
-        column_config={
-            "Montant annuel brut": st.column_config.NumberColumn(format="%.2f €"),
-            "Montant annuel net": st.column_config.NumberColumn(format="%.2f €"),
-            "Montant annuel net après impôt": st.column_config.NumberColumn(
-                format="%.2f €"
-            ),
-            "Augmentation moyenne annuelle": st.column_config.NumberColumn(
-                format="%.2f %%"
-            ),
-            "Cotisations sociales": None,
-        },
-    )
-
-    st.subheader(
-        f"{'Modifier une' if cube.is_income_source_selected() else 'Ajouter une nouvelle'} source de revenu"
-    )
-
-    income_source_form()
-
+conn = st.connection("supabase", type=SupabaseConnection)
 
 st.header("Configuration de vos sources de patrimoine et de revenus")
 
@@ -133,7 +34,68 @@ if "situation_configuration_mode" not in st.session_state:
     st.session_state["situation_configuration_mode"] = "add"
 
 with tab_estate:
-    estate_section()
+    st.subheader("Mes sources de patrimoine et d'investissement")
+
+    st.markdown(f"""
+    Le visuel ci-dessous est un tableau récapitulatif de toutes les sources de patrimoine créées grâce au formulaire plus bas.
+    Le tableau est ainsi vide lors de la première utilisation de {cst.APP_NAME}, et se met à jour automatiquement à chaque soumission du formulaire.                
+    """)
+
+    with st.spinner("Chargement des données de patrimoine...", show_time=True):
+        response_patrimoine = (
+            conn.table("PATRIMOINE")
+            .select(
+                "id_patrimoine",
+                "type, label, amount, deposit, limit, return, date_ouverture_patrimoine",
+            )
+            .eq("id_user", st.session_state["user_data"].id)
+            .execute()
+        )
+
+    dataframe = pl.from_records(response_patrimoine.data)
+    st.session_state["df_patrimoine"] = dataframe
+
+    column_form, column_dataframe = st.columns([1, 2])
+
+    with column_dataframe:
+        if dataframe.height > 0:
+            render_dataframe_patrimoine(dataframe=dataframe)
+
+        else:
+            st.text("Vous pouvez ajouter une première source de patrimoine")
+
+    with column_form:
+        render_form_patrimoine()
 
 with tab_income:
-    income_section()
+    st.subheader("Mes sources de revenus")
+
+    st.markdown(f"""
+    Le visuel ci-dessous est un tableau récapitulatif de toutes les sources de revenu créées grâce au formulaire plus bas.
+    Le tableau est ainsi vide lors de la première utilisation de {cst.APP_NAME}, et se met à jour automatiquement à chaque soumission du formulaire.                
+    """)
+
+    with st.spinner("Chargement des données de revenus...", show_time=True):
+        response_revenu = (
+            conn.table("REVENUS")
+            .select(
+                "id_revenu, type_revenu, label_revenu, montant_revenu, pourcentage_augmentation"
+            )
+            .eq("id_user", st.session_state["user_data"].id)
+            .execute()
+        )
+
+    dataframe = pl.from_records(response_revenu.data)
+    st.session_state["df_revenu"] = dataframe
+
+    column_form, column_dataframe = st.columns([1, 2])
+
+    with column_dataframe:
+        if dataframe.height > 0:
+            render_dataframe_revenu(dataframe=dataframe)
+
+        else:
+            st.text("Vous pouvez ajouter une première source de revenu")
+
+    with column_form:
+        render_form_revenu()

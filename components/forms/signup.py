@@ -18,7 +18,6 @@ def signup():
         st.success(body="Vous êtes connecté à votre compte Finary.")
 
     else:
-        print(f"{response=}")
         st.session_state["is_user_logged"] = False
         st.error(
             body="Aucun utilisateur n'a été retrouvé avec cet email et ce mot de passe."

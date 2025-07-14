@@ -2,8 +2,6 @@ import requests
 import polars as pl
 import streamlit as st
 from datetime import datetime
-import json
-from typing import Literal
 import data.module_state_management as state
 
 
@@ -30,145 +28,6 @@ class Cube:
         if "income_source_social_toggle" not in st.session_state:
             state.write_state(key="income_source_social_toggle", value=False)
 
-    ###   Setters pour écrire des données sur le cube   ###
-
-    def load_sources_file(self):
-        uploaded_file = state.read_state("sources_file_uploader")
-
-        try:
-            string_to_eval = uploaded_file.getvalue().decode("utf-8")
-            value = json.loads(string_to_eval)
-
-        except ValueError as err:
-            raise Exception(f"Le fichier source n'a pas pu être lu :\n{string_to_eval}")
-
-        state.write_state(key="sources", value=value)
-
-        self.update_df_sources()
-
-    def update_df_sources(self):
-        state.write_state(
-            key="dataframe",
-            value=pl.from_records(state.read_state("sources")["estate"]),
-        )
-
-        state.write_state(
-            key="df_income_sources",
-            value=pl.from_records(state.read_state("sources")["income"]),
-        )
-
-    def patch_source(self, type: Literal["estate", "income"], source: dict):
-        """Ajoute une source de revenu ou de patrimoine au cube de données.
-
-        Args:
-            type (Literal['estate', 'income']): Le type de source à ajouter au cube.
-            source (dict): La source avec toutes ses propriétés.
-        """
-        value = state.read_state("sources")
-
-        if state.read_state(f"index_{type}_source_selected") is None:
-            value[type].append(source)
-        else:
-            value[type][state.read_state(f"index_{type}_source_selected")] = source
-
-        state.write_state(key="sources", value=value)
-
-        self.update_df_sources()
-
-    def save_sources(self):
-        timestamp = datetime.strftime(datetime.now(), "%Y-%m-%d %H-%M-%s")
-        file_path = f"./data/personal_sources_{timestamp}.json"
-
-        with open(file_path, "w") as file:
-            json.dump(state.read_state("sources"), file)
-
-    def is_dataframe_initialized(self):
-        return self.get_df_estate_sources().shape[0] > 0
-
-    def is_income_source_selected(self) -> bool:
-        selected_rows_index = state.read_state("income_sources_dataframe")["selection"][
-            "rows"
-        ]
-
-        return len(selected_rows_index) > 0
-
-    def is_estate_source_selected(self) -> bool:
-        selected_rows_index = state.read_state("estate_sources_dataframe")["selection"][
-            "rows"
-        ]
-
-        return len(selected_rows_index) > 0
-
-    def on_select_income_source(self):
-        selected_rows_index = state.read_state("income_sources_dataframe")["selection"][
-            "rows"
-        ]
-
-        if len(selected_rows_index) == 0:
-            state.write_state(key="index_income_source_selected", value=None)
-
-            state.write_state(key="income_source_type_selection", value=None)
-
-            state.write_state(key="input_income_source_label", value=None)
-
-            state.write_state(key="input_annual_gross_salary", value=None)
-
-            state.write_state(key="input_annual_net_salary", value=0.0)
-
-            state.write_state(key="input_annual_net_salary_after_tax", value=0.0)
-
-            state.write_state(key="input_average_annual_increase", value=None)
-        else:
-            index_source = selected_rows_index[0]
-
-            state.write_state(key="index_income_source_selected", value=index_source)
-
-            income_source_row = self.get_df_income_sources().row(
-                index=index_source, named=True
-            )
-
-            state.write_state(
-                key="income_source_type_selection", value=income_source_row["Catégorie"]
-            )
-
-            state.write_state(
-                key="input_income_source_label", value=income_source_row["Label"]
-            )
-
-            state.write_state(
-                key="input_annual_gross_salary",
-                value=income_source_row["Montant annuel brut"],
-            )
-
-            state.write_state(
-                key="input_annual_net_salary",
-                value=income_source_row["Montant annuel net"],
-            )
-
-            state.write_state(
-                key="input_annual_net_salary_after_tax",
-                value=income_source_row["Montant annuel net après impôt"],
-            )
-
-            state.write_state(
-                key="input_average_annual_increase",
-                value=income_source_row["Augmentation moyenne annuelle"],
-            )
-
-    def delete_source(self, type: Literal["estate", "income"]):
-        value = state.read_state("sources")
-        value["type"].pop(state.read_state(f"index_{type}_source_selected"))
-
-        state.write_state(key="sources", value=value)
-
-        self.update_df_sources()
-
-    def delete_estate_source(self):
-        self.delete_source(type="estate")
-
-    def delete_income_source(self):
-        self.delete_source(type="income")
-
     ###   Getters pour lire des données du cube   ###
 
     def get_bitcoin_price(self):
@@ -185,10 +44,6 @@ class Cube:
         bitcoin_price = data["bpi"]["EUR"]["rate_float"]
 
         return bitcoin_price
-
-    def get_estate_sources(self):
-        df = self.get_df_estate_sources()
-        return df.unique(subset="Label")
 
     def get_estate_projection(self, years: int = 10) -> pl.DataFrame:
         results = []
@@ -234,24 +89,6 @@ class Cube:
         results_df = pl.DataFrame(results)
 
         return results_df
-
-    def get_df_estate_sources(self) -> pl.DataFrame:
-        """Renvoie le DataFrame stocké dans le state de l'application, et avec lui toutes les informations concernant
-        les sources de patrimoine.
-
-        Returns:
-            pl.DataFrame: Le DataFrame contenant les sources de patrimoine.
-        """
-        return state.read_state("dataframe")
-
-    def get_df_income_sources(self) -> pl.DataFrame:
-        """Renvoie le DataFrame stocké dans le state de l'application, et avec lui toutes les informations concernant
-        les sources de revenu.
-
-        Returns:
-            pl.DataFrame: Le DataFrame contenant les sources de revenu.
-        """
-        return state.read_state("df_income_sources")
 
     ###   Fonctions pour le calcul de valeur   ###
 
@@ -366,15 +203,6 @@ class Cube:
             schema={"Cotisations sociales": pl.String, "Taux": pl.Float32},
             orient="row",
         )
-
-    def is_column_in_df(self, df: pl.DataFrame, column: str) -> bool:
-        try:
-            df.get_column(name=column)
-            return True
-        except pl.exceptions.ColumnNotFoundError:
-            return False
-        except Exception as err:
-            raise err
 
     def compute_net_income(self, gross_salary: float):
         if self.is_column_in_df(

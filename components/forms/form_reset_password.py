@@ -21,20 +21,16 @@ def reset_password(query_params: dict):
     conn = st.connection("supabase", type=SupabaseConnection)
 
     try:
-        print(f"{query_params}")
-
         conn.auth.set_session(
             access_token=query_params["access_token"],
             refresh_token=query_params["refresh_token"],
         )
 
-        response_update = conn.auth.update_user(
+        conn.auth.update_user(
             {
                 "password": st.session_state["input_reset_password"],
             },
         )
-
-        print(f"{response_update=}")
 
         st.session_state["is_user_logged"] = False
         st.success(body="Votre mot de passe a bien été réinitialisé.")
