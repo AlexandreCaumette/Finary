@@ -1,6 +1,7 @@
 import streamlit as st
 from st_supabase_connection import SupabaseConnection
 from postgrest import APIError
+import polars as pl
 
 
 def insert_patrimoine():
@@ -82,3 +83,10 @@ def delete_patrimoine():
         st.error(
             body=f"{error.code} : {error.message} - {error.details} - {error.hint}"
         )
+
+
+def get_df_patrimoine() -> pl.DataFrame:
+    if "df_patrimoine" in st.session_state:
+        return st.session_state["df_patrimoine"]
+
+    return pl.DataFrame()

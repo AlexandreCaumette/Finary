@@ -4,9 +4,7 @@
 
 
 import streamlit as st
-from st_supabase_connection import SupabaseConnection
 import data.constants as cst
-import os
 
 
 ####################################
@@ -21,12 +19,16 @@ if "is_user_logged" not in st.session_state:
 
 st.title("Application de gestion de patrimoine")
 
+st.divider()
+
 pages = [
     st.Page(
         page=f"pages/{page_config['name']}.py",
     )
     for page_config in cst.PAGES_CONFIG
 ]
+
+current_page = st.navigation(pages=pages, position="hidden")
 
 with st.sidebar:
     for page_config in cst.PAGES_CONFIG:
@@ -57,38 +59,4 @@ with st.sidebar:
         if login_button:
             st.switch_page(page=r"pages/login.py")
 
-current_page = st.navigation(pages=pages, position="hidden")
-
 current_page.run()
-
-
-def select_page(name: str):
-    if name == "home":
-        st.switch_page(f"pages/{name}.py")
-
-    elif st.session_state["is_user_logged"]:
-        st.switch_page(f"pages/{name}.py")
-
-    else:
-        conn = st.connection("supabase", type=SupabaseConnection)
-
-        session = conn.auth.get_session()
-
-        if session is None:
-            st.warning("Aucune session n'a été trouvée, veuillez vous connecter.")
-            st.switch_page("pages/loggin.py")
-
-        else:
-            st.info("Une session a été récupérée...")
-
-            user = conn.auth.get_user(jwt=session.access_token)
-
-            if user is None:
-                st.warning("Aucun utilisateur n'a été trouvé, veuillez vous connecter.")
-                st.switch_page("pages/loggin.py")
-
-            else:
-                st.info("Un utilisateur a été récupéré...")
-                st.session_state["is_user_logged"] = True
-                st.session_state["user_data"] = user
-                st.switch_page(f"pages/{name}.py")

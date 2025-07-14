@@ -1,6 +1,7 @@
 import streamlit as st
 from st_supabase_connection import SupabaseConnection
 from postgrest import APIError
+import polars as pl
 
 
 def insert_revenu():
@@ -76,3 +77,10 @@ def delete_revenu():
         st.error(
             body=f"{error.code} : {error.message} - {error.details} - {error.hint}"
         )
+
+
+def get_df_revenu() -> pl.DataFrame:
+    if "df_revenu" in st.session_state:
+        return st.session_state["df_revenu"]
+
+    return pl.DataFrame()
