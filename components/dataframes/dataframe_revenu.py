@@ -11,6 +11,8 @@ def render_dataframe_revenu(dataframe: pl.DataFrame):
         on_select="rerun",
         column_config={
             "id_revenu": None,
+            "type_revenu": st.column_config.TextColumn(label="Type de revenu"),
+            "label_revenu": st.column_config.TextColumn(label="Nom du revenu"),
             "montant_revenu": st.column_config.NumberColumn(
                 label="Montant", format="%.2f €"
             ),

@@ -5,6 +5,7 @@
 
 import streamlit as st
 import data.constants as cst
+import stores.store_utilisateur as store_utilisateur
 
 
 ####################################
@@ -14,13 +15,6 @@ import data.constants as cst
 
 st.set_page_config(page_title="Finary", page_icon="🪙", layout="wide")
 
-if "is_user_logged" not in st.session_state:
-    st.session_state["is_user_logged"] = False
-
-st.title("Application de gestion de patrimoine")
-
-st.divider()
-
 pages = [
     st.Page(
         page=f"pages/{page_config['name']}.py",
@@ -29,6 +23,13 @@ pages = [
 ]
 
 current_page = st.navigation(pages=pages, position="hidden")
+
+if "is_user_logged" not in st.session_state:
+    st.session_state["is_user_logged"] = False
+
+st.title("Application de gestion de patrimoine")
+
+st.divider()
 
 with st.sidebar:
     for page_config in cst.PAGES_CONFIG:
@@ -45,10 +46,14 @@ with st.sidebar:
     st.divider()
 
     if st.session_state["is_user_logged"]:
-        st.button(
+        logout_button = st.button(
             label="Me déconnecter",
             icon=":material/logout:",
+            on_click=store_utilisateur.signout,
         )
+
+        if logout_button:
+            st.switch_page("pages/home.py")
 
     else:
         login_button = st.button(

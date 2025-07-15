@@ -4,6 +4,29 @@ from postgrest import APIError
 import polars as pl
 
 
+def fetch_revenu():
+    try:
+        conn = st.connection("supabase", type=SupabaseConnection)
+
+        response = (
+            conn.table("REVENUS")
+            .select(
+                "id_revenu, type_revenu, label_revenu, montant_revenu, pourcentage_augmentation"
+            )
+            .eq("id_user", st.session_state["user_data"].id)
+            .execute()
+        )
+
+        dataframe = pl.from_records(response.data)
+
+        st.session_state["df_revenu"] = dataframe
+
+    except APIError as error:
+        st.error(
+            body=f"{error.code} : {error.message} - {error.details} - {error.hint}"
+        )
+
+
 def insert_revenu():
     try:
         payload = {
@@ -19,6 +42,8 @@ def insert_revenu():
         conn = st.connection("supabase", type=SupabaseConnection)
 
         (conn.table("REVENUS").insert(json=payload, default_to_null=False).execute())
+
+        fetch_revenu()
 
         st.success("La nouvelle source a été ajoutée avec succès", icon="💸")
 
@@ -50,6 +75,8 @@ def update_revenu():
             .execute()
         )
 
+        fetch_revenu()
+
         st.success("La source a été modifiée avec succès", icon="💸")
         st.session_state["situation_configuration_mode"] = "add"
 
@@ -69,6 +96,8 @@ def delete_revenu():
             .eq("id_revenu", st.session_state["selected_id_revenu"])
             .execute()
         )
+
+        fetch_revenu()
 
         st.success("La source a été supprimée avec succès", icon="💸")
         st.session_state["situation_configuration_mode"] = "add"

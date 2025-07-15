@@ -1,6 +1,5 @@
 import streamlit as st
 from st_supabase_connection import SupabaseConnection
-import polars as pl
 
 import data.constants as cst
 
@@ -41,19 +40,7 @@ with tab_estate:
     Le tableau est ainsi vide lors de la première utilisation de {cst.APP_NAME}, et se met à jour automatiquement à chaque soumission du formulaire.                
     """)
 
-    with st.spinner("Chargement des données de patrimoine...", show_time=True):
-        response_patrimoine = (
-            conn.table("PATRIMOINE")
-            .select(
-                "id_patrimoine",
-                "type, label, amount, deposit, limit, return, date_ouverture_patrimoine",
-            )
-            .eq("id_user", st.session_state["user_data"].id)
-            .execute()
-        )
-
-    dataframe = pl.from_records(response_patrimoine.data)
-    st.session_state["df_patrimoine"] = dataframe
+    dataframe = st.session_state["df_patrimoine"]
 
     column_form, column_dataframe = st.columns([1, 2])
 
@@ -75,18 +62,7 @@ with tab_income:
     Le tableau est ainsi vide lors de la première utilisation de {cst.APP_NAME}, et se met à jour automatiquement à chaque soumission du formulaire.                
     """)
 
-    with st.spinner("Chargement des données de revenus...", show_time=True):
-        response_revenu = (
-            conn.table("REVENUS")
-            .select(
-                "id_revenu, type_revenu, label_revenu, montant_revenu, pourcentage_augmentation"
-            )
-            .eq("id_user", st.session_state["user_data"].id)
-            .execute()
-        )
-
-    dataframe = pl.from_records(response_revenu.data)
-    st.session_state["df_revenu"] = dataframe
+    dataframe = st.session_state["df_revenu"]
 
     column_form, column_dataframe = st.columns([1, 2])
 
