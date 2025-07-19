@@ -23,7 +23,6 @@ PAGES_CONFIG = [
         "name": "summary",
         "icon": "📊",
         "help": """
-        (⚠️ Accessible uniquement lorsque sa situation financière est renseignée ⚠️)
         Avoir une vue synthétique de son patrimoine à date, et des perspectives d'évolution dans les années à venir.
         """,
         "visible": True,
@@ -33,7 +32,6 @@ PAGES_CONFIG = [
         "name": "analysis",
         "icon": "👨🏻‍🏫",
         "help": """
-        (⚠️ Accessible uniquement lorsque sa situation financière est renseignée ⚠️)
         Comprendre les détails de mon imposition, de la fiscalité, et des modélisations d'évolution de mon patrimoine.
         """,
         "visible": True,

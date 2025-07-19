@@ -131,3 +131,11 @@ def calcul_revenu_projete(years: int) -> float:
         .select(pl.sum("montant_revenu"))
         .item()
     )
+
+
+def calcul_revenu_mensuelle_actuel() -> float:
+    return calcul_revenu_actuel() / 12
+
+
+def calcul_epargne_mensuelle_actuelle() -> float:
+    return calcul_epargne_annuelle_actuelle() / 12

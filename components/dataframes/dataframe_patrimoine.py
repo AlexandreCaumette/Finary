@@ -22,7 +22,7 @@ def render_dataframe_patrimoine(dataframe: pl.DataFrame):
                 label="Rendement annuel", format="%.2f %%"
             ),
             "date_ouverture_patrimoine": st.column_config.DateColumn(
-                label="Date d'ouverture du produit"
+                label="Date d'ouverture du produit", format="D MMM YYYY"
             ),
         },
     )
