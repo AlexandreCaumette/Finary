@@ -1,10 +1,8 @@
 import streamlit as st
 
-from data.cube import Cube
-import data.module_state_management as state
 import data.constants as cst
-
-from components.forms.form_inputs import number_input, patch_button
+from components.components import number_input
+from data.cube import Cube
 
 cube = Cube()
 

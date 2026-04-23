@@ -1,90 +1,96 @@
-#################################
-###   Import des librairies   ###
-#################################
-
+import pathlib
 
 import streamlit as st
-from st_supabase_connection import SupabaseConnection
-from data.cube import Cube
-import data.constants as cst
 
-from components.pages.page_home import page_home
-from components.pages.page_404 import page_404
-
-cube = Cube()
+from models.modele_utilisateur import Utilisateur
 
 
-####################################
-###   Configuration de la page   ###
-####################################
+def main():
+    st.set_page_config(page_title="Finary", page_icon="🪙", layout="wide")
 
+    st.title("Application de gestion de patrimoine")
 
-st.set_page_config(page_title="Finary", page_icon="🪙", layout="wide")
+    st.divider()
 
-st.title("Application de gestion de patrimoine")
+    if "is_user_logged" not in st.session_state:
+        st.session_state["is_user_logged"] = False
 
-columns = st.columns(spec=len(cst.PAGES_CONFIG))
+    pages = {
+        "Navigation": [
+            st.Page(
+                page=pathlib.Path("pages") / "page_accueil.py",
+                title="Accueil",
+                icon="🏠",
+                default=True,
+            ),
+            st.Page(
+                page=pathlib.Path("pages") / "page_situation.py",
+                title="Ma situation",
+                icon="📝",
+            ),
+            st.Page(
+                page=pathlib.Path("pages") / "page_summary.py",
+                title="Ma tableau de bord",
+                icon="📊",
+                visibility="visible"
+                if st.session_state["is_user_logged"]
+                else "hidden",
+            ),
+            st.Page(
+                page=pathlib.Path("pages") / "page_analysis.py",
+                title="Analyse de ma situation",
+                icon="👨🏻‍🏫",
+                visibility="visible"
+                if st.session_state["is_user_logged"]
+                else "hidden",
+            ),
+        ],
+        "Mon compte": [
+            st.Page(
+                page=pathlib.Path("pages") / "page_me_creer_un_compte.py",
+                title="Me créer un compte",
+                icon=":material/accessibility_new:",
+                url_path="me-creer-un-compte",
+            )
+        ],
+    }
 
+    page_me_connecter = st.Page(
+        page=pathlib.Path("pages") / "page_me_connecter.py",
+        title="Me connecter",
+        icon=":material/login:",
+        url_path="me-connecter",
+    )
 
-def set_active_container(name: str):
-    st.session_state["active_container"] = name
+    page_me_deconnecter = st.Page(
+        page=pathlib.Path("pages") / "page_me_deconnecter.py",
+        title="Me déconnecter",
+        icon=":material/logout:",
+        url_path="me-deconnecter",
+    )
 
+    if st.session_state["is_user_logged"]:
+        pages["Mon compte"].append(page_me_deconnecter)
 
-if "active_container" not in st.session_state:
-    set_active_container(name="home")
+        utilisateur: Utilisateur = st.session_state["utilisateur"]
 
-if "is_user_logged" not in st.session_state:
-    st.session_state["is_user_logged"] = False
-
-
-for index_col, page_config in enumerate(cst.PAGES_CONFIG):
-    with columns[index_col]:
-        st.button(
-            label=page_config["label"],
-            icon=page_config["icon"],
-            disabled=page_config["disabled"],
-            help=page_config.get("help", None),
-            use_container_width=True,
-            type="primary"
-            if page_config["name"] == st.session_state["active_container"]
-            else "secondary",
-            on_click=set_active_container,
-            args=[page_config["name"]],
-        )
-
-st.divider()
-
-with st.container():
-    if st.session_state["active_container"] == "home":
-        page_home()
-
-    elif st.session_state["active_container"] == "situation":
-        if st.session_state["is_user_logged"]:
-            st.switch_page("pages/situation.py")
-        else:
-            conn = st.connection("supabase", type=SupabaseConnection)
-
-            session = conn.auth.get_session()
-
-            if session is not None:
-                st.info("Une session a été récupérée...")
-
-                user = conn.auth.get_user(jwt=session.access_token)
-
-                if user is not None:
-                    st.info("Un utilisateur a été récupéré...")
-
-                    st.session_state["is_user_logged"] = True
-                    st.session_state["user_data"] = user
-                    st.switch_page("pages/situation.py")
-
-            st.switch_page("pages/loggin.py")
-
-    elif st.session_state["active_container"] == "summary":
-        pass
-
-    elif st.session_state["active_container"] == "analysis":
-        pass
+        if utilisateur.est_administrateur:
+            pages["Admin"] = [
+                st.Page(
+                    page=pathlib.Path("pages") / "page_produits.py",
+                    title="Gérer les produits",
+                    icon=":material/wallet:",
+                    url_path="gerer-produits",
+                )
+            ]
 
     else:
-        page_404()
+        pages["Mon compte"].append(page_me_connecter)
+
+    current_page = st.navigation(pages=pages)
+
+    current_page.run()
+
+
+if __name__ == "__main__":
+    main()

@@ -1,8 +1,9 @@
 import streamlit as st
+
 import data.constants as cst
 
 
-def page_home():
+def main_home():
     st.header("Bienvenue sur votre application de gestion de patrimoine !")
 
     st.subheader("Qu'est-ce que c'est ?")
@@ -38,15 +39,19 @@ def page_home():
     Voici la marche à suivre pour utiliser {cst.APP_NAME} :
 
     1. Configurer ses sources de patrimoine et revenu
-    - Il faut se rendre dans l'onglet "{cst.print_page_title(1)}".
+    - Il faut se rendre dans l'onglet "Ma situation".
     - Il faut suivre les indications pour ajouter manuellement ses sources de patrimoine, ainsi que ses sources de revenu.
 
-    2. Prendre connaissance de son stleau de pilotage
-    - Il faut se rendre dans l'onglet "{cst.print_page_title(2)}".
+    2. Prendre connaissance de son tableau de pilotage
+    - Il faut se rendre dans l'onglet "Mon tableau de bord".
     - Il faut parcourir chaque visuel et indicateur, et prendre le temps de lire les notes visibles en survolant certains éléments.
     - Il faut jouer avec le nombre d'années pour les projections.
 
     3. Analyser tranquillement les détails de sa situation
-    - Il faut se rendre dans l'onglet "{cst.print_page_title(3)}".
+    - Il faut se rendre dans l'onglet "Analyse de ma situation".
     - Il faut prendre le temps de lire chaque panneau déroulant, pour prendre connaissance de chaque détail de sa situation financière.
     """)
+
+
+if __name__ == "__main__":
+    main_home()
